@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emotional Intelligent Bot | Quantrillion OS</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --primary: #00f2ff;
+            --secondary: #0051ff;
+            --dark: #050505;
+            --glass: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-glow: 0 0 10px rgba(0, 242, 255, 0.5);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            cursor: none; /* Hide default cursor */
+        }
+
+        body {
+            background-color: var(--dark);
+            color: white;
+            font-family: 'Rajdhani', sans-serif;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* --- Custom Cursor --- */
+        .cursor-dot,
+        .cursor-outline {
+            position: fixed;
+            top: 0;
+            left: 0;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            z-index: 9999;
+            pointer-events: none;
+        }
+
+        .cursor-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--primary);
+        }
+
+        .cursor-outline {
+            width: 40px;
+            height: 40px;
+            border: 2px solid var(--primary);
+            transition: all 0.15s ease-out;
+        }
+
+        body:hover .cursor-outline {
+            opacity: 1;
+        }
+
+        /* --- Background Particles Canvas --- */
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: radial-gradient(circle at center, #0a0a1a 0%, #000000 100%);
+        }
+
+        /* --- Typography --- */
+        h1, h2, h3 {
+            font-family: 'Orbitron', sans-serif;
+            text-transform: uppercase;
+        }
+
+        span.highlight {
+            color: var(--primary);
+            text-shadow: var(--text-glow);
+        }
+
+        /* --- Layout Utility --- */
+        section {
+            padding: 100px 10%;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* --- Navigation --- */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 20px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        /* --- Logo Design (CSS/SVG) --- */
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo-svg {
+            width: 50px;
+            height: 50px;
+            fill: none;
+            stroke: var(--primary);
+            stroke-width: 2;
+            filter: drop-shadow(0 0 5px var(--primary));
+            animation: pulse-logo 3s infinite;
+        }
+
+        @keyframes pulse-logo {
+            0%, 100% { filter: drop-shadow(0 0 5px var(--primary)); }
+            50% { filter: drop-shadow(0 0 15px var(--secondary)); }
+        }
+
+        .logo-text {
+            font-size: 1.2rem;
+            font-weight: 900;
+            letter-spacing: 2px;
+        }
+
+        /* --- Hero Section --- */
+        #home {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            perspective: 1000px;
+        }
+
+        .hero-content {
+            max-width: 600px;
+            z-index: 10;
+        }
+
+        .hero-title {
+            font-size: 4rem;
+            line-height: 1.1;
+            margin-bottom: 20px;
+            opacity: 0; /* Animated by GSAP */
+            transform: translateY(50px);
+        }
+
+        .hero-title .bot-name {
+            display: block;
+            font-size: 5rem;
+            background: -webkit-linear-gradient(0deg, #fff, var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* 3D Container for Three.js Sphere */
+        #canvas-container {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 60%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* --- Glass Cards (Shared) --- */
+        .glass-card {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 16px;
+            padding: 30px;
+            transition: transform 0.3s, box-shadow 0.3s;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .glass-card:hover {
+            box-shadow: 0 0 20px rgba(0, 242, 255, 0.2);
+            border-color: var(--primary);
+        }
+
+        /* --- Description Section --- */
+        .desc-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            align-items: center;
+        }
+
+        .floating-tech {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        /* --- Tech Stack --- */
+        .tech-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .tech-pill {
+            padding: 10px 20px;
+            border: 1px solid var(--primary);
+            border-radius: 50px;
+            color: var(--primary);
+            font-weight: bold;
+            font-size: 0.9rem;
+            background: rgba(0, 242, 255, 0.1);
+            transition: 0.3s;
+        }
+
+        .tech-pill:hover {
+            background: var(--primary);
+            color: #000;
+        }
+
+        .quantrillion {
+            background: linear-gradient(45deg, var(--secondary), var(--primary));
+            color: white;
+            border: none;
+            box-shadow: 0 0 15px var(--secondary);
+        }
+
+        /* --- Gallery --- */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .gallery-item {
+            height: 250px;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid var(--glass-border);
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s;
+        }
+
+        .gallery-item:hover img {
+            transform: scale(1.1);
+        }
+
+        .gallery-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: linear-gradient(to top, black, transparent);
+            padding: 20px;
+            opacity: 0;
+            transition: 0.3s;
+        }
+
+        .gallery-item:hover .gallery-overlay {
+            opacity: 1;
+        }
+
+        /* --- Team Section --- */
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+        }
+
+        .team-member {
+            text-align: center;
+            position: relative;
+            transform-style: preserve-3d;
+        }
+
+        .member-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--dark), var(--secondary));
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            border: 2px solid var(--primary);
+            box-shadow: 0 0 15px rgba(0, 242, 255, 0.3);
+        }
+
+        .role-tag {
+            font-size: 0.8rem;
+            color: #aaa;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        /* --- Feedback & Footer --- */
+        .feedback-section {
+            text-align: center;
+            padding-bottom: 150px;
+        }
+
+        .cyber-btn {
+            padding: 15px 40px;
+            background: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            font-family: 'Orbitron';
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            position: relative;
+            overflow: hidden;
+            transition: 0.3s;
+            margin-top: 30px;
+        }
+
+        .cyber-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: var(--primary);
+            transition: 0.3s;
+            z-index: -1;
+        }
+
+        .cyber-btn:hover {
+            color: #000;
+        }
+
+        .cyber-btn:hover::before {
+            left: 0;
+        }
+
+        footer {
+            background: #000;
+            text-align: center;
+            padding: 20px;
+            border-top: 1px solid var(--glass-border);
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--dark);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--secondary);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Cursor Elements -->
+    <div class="cursor-dot" id="cursor-dot"></div>
+    <div class="cursor-outline" id="cursor-outline"></div>
+
+    <!-- Background 3D Particles -->
+    <canvas id="bg-canvas"></canvas>
+
+    <!-- Navigation -->
+    <nav>
+        <div class="logo-container">
+            <!-- Cool & Funny Logo: A slightly glitchy robot face -->
+            <svg class="logo-svg" viewBox="0 0 100 100">
+                <rect x="20" y="20" width="60" height="60" rx="10" stroke="currentColor" stroke-width="4" fill="none"/>
+                <!-- Eyes -->
+                <circle cx="35" cy="40" r="5" fill="currentColor">
+                    <animate attributeName="r" values="5;2;5" dur="3s" repeatCount="indefinite" />
+                </circle>
+                <circle cx="65" cy="40" r="8" fill="none" stroke="currentColor" stroke-width="2"/>
+                <circle cx="65" cy="40" r="2" fill="currentColor"/>
+                <!-- Mouth -->
+                <path d="M 35 70 Q 50 80 65 70" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round"/>
+                <!-- Antenna -->
+                <line x1="50" y1="20" x2="50" y2="5" stroke="currentColor" stroke-width="3"/>
+                <circle cx="50" cy="5" r="3" fill="currentColor"/>
+            </svg>
+            <div class="logo-text">EMOTIONAL<br><span style="color:var(--secondary)">BOT</span></div>
+        </div>
+        <div style="font-family: 'Orbitron'; letter-spacing: 2px; font-size: 0.8rem;">
+            PROJECT ID: EB-01
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home">
+        <div class="hero-content">
+            <h1 class="hero-title">
+                THE FUTURE IS<br>
+                <span class="bot-name">EMOTIONAL</span>
+            </h1>
+            <p style="font-size: 1.2rem; margin-bottom: 30px; color: #ccc;">
+                Multimodal control meets genuine artificial empathy. Powered by LLaMA 3 & Quantrillion OS.
+            </p>
+            <button class="cyber-btn" onclick="document.getElementById('about').scrollIntoView({behavior: 'smooth'})">Initialize System</button>
+        </div>
+        <div id="canvas-container"></div>
+    </section>
+
+    <!-- Description & Tech Section -->
+    <section id="about">
+        <div class="desc-grid">
+            <div class="glass-card floating-tech" data-tilt>
+                <h2><i class="fas fa-microchip"></i> Hybrid Intelligence</h2>
+                <br>
+                <p>The uniqueness of this project lies in combining multimodal control (gestures, mobile commands, and voice) with emotional intelligence in a single system. Unlike conventional robots, it not only executes commands but also detects and expresses emotions using a locally running <strong>LLaMA 3 model</strong>.</p>
+                <br>
+                <p style="color: #aaa; font-style: italic;">"Not just a machine, but a companion."</p>
+                
+                <h3 style="margin-top: 30px; color: var(--primary);">THE TECH STACK</h3>
+                <div class="tech-list">
+                    <span class="tech-pill">LLaMA 3.1 1B</span>
+                    <span class="tech-pill">Python NLP</span>
+                    <span class="tech-pill">OpenCV (Face/Gesture)</span>
+                    <span class="tech-pill">Arduino Mega</span>
+                    <span class="tech-pill">OLED & Servos</span>
+                    <span class="tech-pill quantrillion">Quantrillion OS</span>
+                </div>
+            </div>
+            
+            <div class="glass-card" data-tilt style="border-left: 4px solid var(--secondary);">
+                <h2><i class="fas fa-rocket"></i> Beyond Practicality</h2>
+                <br>
+                <p>This hybrid design makes the robot more human-like, empathetic, and practical for real-world applications in healthcare, education, and assistive technologies.</p>
+                <br>
+                <p><strong>Offline Privacy:</strong> Real-time response with no data leaving the device.</p>
+                <br>
+                <div style="background: rgba(0,0,0,0.5); padding: 15px; border-radius: 8px;">
+                    <h4 style="color: var(--primary);">SYSTEM STATUS</h4>
+                    <p style="font-family: monospace; color: #0f0;">> AI Engine: ONLINE</p>
+                    <p style="font-family: monospace; color: #0f0;">> Emotion Detection: ACTIVE</p>
+                    <p style="font-family: monospace; color: #0f0;">> Quantrillion OS: BOOTED</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Gallery Section -->
+    <section id="gallery">
+        <h2 style="text-align: center; margin-bottom: 50px; font-size: 3rem;">PROJECT <span class="highlight">GALLERY</span></h2>
+        <div class="gallery-grid">
+            <!-- Placeholders used. Replace src with your actual project photos later -->
+            <div class="gallery-item">
+                <img src="https://placehold.co/600x400/050505/00f2ff?text=Bot+Prototype+V1" alt="Prototype">
+                <div class="gallery-overlay">
+                    <h3>Chassis Design</h3>
+                    <p>3D Printed Structure</p>
+                </div>
+            </div>
+            <div class="gallery-item">
+                <img src="https://placehold.co/600x400/001/0051ff?text=Circuitry+Logic" alt="Circuit">
+                <div class="gallery-overlay">
+                    <h3>Brain Core</h3>
+                    <p>Arduino & Sensors</p>
+                </div>
+            </div>
+            <div class="gallery-item">
+                <img src="https://placehold.co/600x400/000/FFF?text=Quantrillion+OS" alt="OS">
+                <div class="gallery-overlay">
+                    <h3>Quantrillion OS</h3>
+                    <p>Custom Boot Sequence</p>
+                </div>
+            </div>
+            <div class="gallery-item">
+                <img src="https://placehold.co/600x400/111/00f2ff?text=Gesture+Control" alt="Gesture">
+                <div class="gallery-overlay">
+                    <h3>Gesture Control</h3>
+                    <p>Python Hand Tracking</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Team Section -->
+    <section id="team">
+        <h2 style="text-align: center; margin-bottom: 20px;">THE <span class="highlight">CREATORS</span></h2>
+        <p style="text-align: center; margin-bottom: 50px; color: #aaa;">Engineers behind the emotion</p>
+        
+        <div class="team-grid">
+            <!-- Member 1 -->
+            <div class="glass-card team-member" data-tilt>
+                <div class="member-avatar"><i class="fas fa-user-astronaut"></i></div>
+                <h3>Devam Barad</h3>
+                <span class="role-tag">LEADER | CODING | ELECTRICAL</span>
+            </div>
+            
+            <!-- Member 2 -->
+            <div class="glass-card team-member" data-tilt>
+                <div class="member-avatar"><i class="fas fa-cube"></i></div>
+                <h3>Parth Navadiya</h3>
+                <span class="role-tag">3D MODELING | MEDIA</span>
+            </div>
+
+            <!-- Member 3 -->
+            <div class="glass-card team-member" data-tilt>
+                <div class="member-avatar"><i class="fas fa-drafting-compass"></i></div>
+                <h3>Naitri Andhariya</h3>
+                <span class="role-tag">3D MODELING | PRESENTATION</span>
+            </div>
+
+            <!-- Member 4 -->
+            <div class="glass-card team-member" data-tilt>
+                <div class="member-avatar"><i class="fas fa-code"></i></div>
+                <h3>Om Andhariya</h3>
+                <span class="role-tag">CODING | ELECTRICAL</span>
+            </div>
+
+            <!-- Member 5 -->
+            <div class="glass-card team-member" data-tilt>
+                <div class="member-avatar"><i class="fas fa-vial"></i></div>
+                <h3>Tanaz Pathan</h3>
+                <span class="role-tag">TESTING | 3D SUPPORT</span>
+            </div>
+
+            <!-- Member 6 -->
+            <div class="glass-card team-member" data-tilt>
+                <div class="member-avatar"><i class="fas fa-bolt"></i></div>
+                <h3>Balar Dhruv</h3>
+                <span class="role-tag">ELECTRICAL SPECIALIST</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Feedback Section -->
+    <section class="feedback-section">
+        <div class="glass-card" style="max-width: 600px; margin: 0 auto; padding: 50px;">
+            <h2 style="margin-bottom: 20px;">SYSTEM FEEDBACK</h2>
+            <p>Help us improve the Emotional Intelligence Algorithm.</p>
+            <button class="cyber-btn" onclick="alert('Redirecting to Feedback Module...')">Submit Data</button>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2023 Emotional Intelligent Bot Team. Powered by Quantrillion OS.</p>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.7.0/vanilla-tilt.min.js"></script>
+
+    <script>
+        // --- Custom Cursor Logic ---
+        const cursorDot = document.getElementById("cursor-dot");
+        const cursorOutline = document.getElementById("cursor-outline");
+
+        window.addEventListener("mousemove", (e) => {
+            const posX = e.clientX;
+            const posY = e.clientY;
+
+            // Dot follows instantly
+            cursorDot.style.left = `${posX}px`;
+            cursorDot.style.top = `${posY}px`;
+
+            // Outline follows with slight delay (animation done via CSS transition, but we update coords)
+            cursorOutline.animate({
+                left: `${posX}px`,
+                top: `${posY}px`
+            }, { duration: 500, fill: "forwards" });
+        });
+
+        // --- Three.js Implementation (Hero Sphere & Background) ---
+        const initThreeJS = () => {
+            // 1. Hero Sphere (Dotted interactive circle)
+            const container = document.getElementById('canvas-container');
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            container.appendChild(renderer.domElement);
+
+            // Create Geometry (Icosahedron for sci-fi look)
+            const geometry = new THREE.IcosahedronGeometry(2.5, 2); // Radius, Detail
+            const material = new THREE.PointsMaterial({
+                color: 0x00f2ff,
+                size: 0.05,
+                transparent: true,
+                opacity: 0.8
+            });
+
+            const sphere = new THREE.Points(geometry, material);
+            scene.add(sphere);
+
+            camera.position.z = 5;
+
+            // Mouse interaction for rotation
+            let mouseX = 0;
+            let mouseY = 0;
+            document.addEventListener('mousemove', (event) => {
+                mouseX = (event.clientX / window.innerWidth) * 2 - 1;
+                mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
+            });
+
+            // Animation Loop
+            const animate = () => {
+                requestAnimationFrame(animate);
+
+                // Constant rotation
+                sphere.rotation.y += 0.002;
+                sphere.rotation.x += 0.001;
+
+                // Mouse influence
+                sphere.rotation.y += mouseX * 0.05;
+                sphere.rotation.x += mouseY * 0.05;
+
+                renderer.render(scene, camera);
+            };
+
+            animate();
+
+            // Handle Resize
+            window.addEventListener('resize', () => {
+                camera.aspect = container.clientWidth / container.clientHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(container.clientWidth, container.clientHeight);
+            });
+        };
+
+        // --- Background Particles ---
+        const initBgParticles = () => {
+            const canvas = document.getElementById('bg-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            let particlesArray = [];
+            const numberOfParticles = 100;
+
+            class Particle {
+                constructor(){
+                    this.x = Math.random() * canvas.width;
+                    this.y = Math.random() * canvas.height;
+                    this.size = Math.random() * 2;
+                    this.speedX = (Math.random() * 1) - 0.5;
+                    this.speedY = (Math.random() * 1) - 0.5;
+                    this.color = 'rgba(0, 242, 255, 0.3)';
+                }
+                update(){
+                    this.x += this.speedX;
+                    this.y += this.speedY;
+                    if(this.x > canvas.width || this.x < 0) this.speedX = -this.speedX;
+                    if(this.y > canvas.height || this.y < 0) this.speedY = -this.speedY;
+                }
+                draw(){
+                    ctx.fillStyle = this.color;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+
+            function init(){
+                for (let i = 0; i < numberOfParticles; i++){
+                    particlesArray.push(new Particle());
+                }
+            }
+
+            function animate(){
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                for (let i = 0; i < particlesArray.length; i++){
+                    particlesArray[i].update();
+                    particlesArray[i].draw();
+                }
+                requestAnimationFrame(animate);
+            }
+
+            init();
+            animate();
+        };
+
+        // --- GSAP Animations ---
+        const initGSAP = () => {
+            gsap.registerPlugin(ScrollTrigger);
+
+            // Hero Text Entrance
+            gsap.to(".hero-title", {
+                opacity: 1,
+                y: 0,
+                duration: 1.5,
+                ease: "power4.out"
+            });
+
+            // Animate Cards on scroll (Google Anti-gravity feel - cards floating up)
+            gsap.utils.toArray('.glass-card, .gallery-item').forEach((elem) => {
+                gsap.from(elem, {
+                    scrollTrigger: {
+                        trigger: elem,
+                        start: "top 85%",
+                        toggleActions: "play none none reverse"
+                    },
+                    y: 100,
+                    opacity: 0,
+                    duration: 1,
+                    ease: "power2.out"
+                });
+            });
+        };
+
+        // Initialize Everything
+        window.onload = () => {
+            initThreeJS();
+            initBgParticles();
+            initGSAP();
+
+            // Init VanillaTilt for 3D card effect
+            VanillaTilt.init(document.querySelectorAll(".glass-card"), {
+                max: 15,
+                speed: 400,
+                glare: true,
+                "max-glare": 0.2,
+            });
+        };
+
+    </script>
+</body>
+</html>
